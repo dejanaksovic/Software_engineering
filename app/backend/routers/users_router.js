@@ -1,15 +1,21 @@
 const express = require('express')
 const router = express.Router()
-const {createUser, getAllUsers} = require('../controllers/user_controllers')
+const {createUser, getAllUsers, loginUser} = require('../controllers/user_controllers')
+const { getAuthLevel } = require('../middleware/auth')
 
-//@ users/create
-//POST
-//Sends a request to create a new user
-router.post('/create', createUser)
+// Sends a request to create a user
+// @POST /users/create
+// PRIVATE [ADMIN]
+router.post('/create/',getAuthLevel, createUser)
 
-//@ users/all
-//GET
-//Send a request to retrieve all users
-router.get('/all', getAllUsers)
+// Sends a request to retrive all users
+// @GET users/all
+// PRIVATE [ADMIN, BOSS]
+router.get('/all',getAuthLevel, getAllUsers)
+
+// Sends a login request for the return of a json web token
+// @POST /users/login
+// Access public
+router.post('/login', loginUser)
 
 module.exports = router

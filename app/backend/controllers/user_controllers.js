@@ -1,10 +1,16 @@
 const User = require('../models/user')
 const {hashPass, checkPass} = require('../middleware/hasing')
+const {generateToken, getAuthLevel} = require('../middleware/auth')
 
 const createUser = async (req, res) => {
 
-    const {name, password, authority, email} = req.body
+    let user = await User.findById(req.userid)
 
+    console.log(user)
+
+
+
+    const {name, password, authority, email} = req.body
 
     if(!name || !password || !email) {
         res.status(400).json({
@@ -17,8 +23,6 @@ const createUser = async (req, res) => {
         return
     }
 
-    let user = ""
-
     try {
         user = User.find({'email':email})
     }
@@ -29,8 +33,6 @@ const createUser = async (req, res) => {
         })
         return
     }
-
-    console.log(user)
 
     let hashedPass = ""
 
@@ -56,6 +58,10 @@ const createUser = async (req, res) => {
 }
 
 const getAllUsers = async (req, res) => {
+    const user = await User.findById(req.userid)
+
+    console.log(user)
+
     try {
         const users = await User.find()
         res.status(200).json(
@@ -69,7 +75,34 @@ const getAllUsers = async (req, res) => {
     } 
 }
 
+const loginUser = async (req, res) => {
+    const {email, password} = req.body
+
+    const testUser = await User.find({email})
+
+    if(!testUser) {
+        res.status(400).json({
+            message: "The user doesn't exist"
+        })
+        return
+    }
+
+    if(await checkPass(password, testUser.password)) {
+        res.status(200).json({
+            token: await generateToken(testUser.id)
+        })
+
+        return
+    }
+
+    res.status(400).json({
+        message: "The credentials don't match"
+    })
+
+}
+
 module.exports = {
     createUser,
-    getAllUsers
+    getAllUsers,
+    loginUser
 }

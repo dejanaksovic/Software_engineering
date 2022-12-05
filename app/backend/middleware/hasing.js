@@ -18,9 +18,11 @@ const hashPass = async (pass) => {
 //TO THINK: Maybe this function isn't necessary, one line of code either way
 const checkPass = async (pass, hashedPass) => {
 
+    let isRight = true
+
     try {
 
-        const isRight = await bcrypt.compare(pass, hashedPass)
+        isRight = await bcrypt.compare(pass, hashedPass)
 
     }catch(err) {
 
