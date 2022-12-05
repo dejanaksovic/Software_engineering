@@ -2,7 +2,9 @@ const User = require('../models/user')
 const {hashPass, checkPass} = require('../middleware/hasing')
 
 const createUser = async (req, res) => {
+
     const {name, password, authority, email} = req.body
+
 
     if(!name || !password || !email) {
         res.status(400).json({
@@ -15,14 +17,20 @@ const createUser = async (req, res) => {
         return
     }
 
-    let user = await User.find({email})
+    let user = ""
 
-    if(user) {
+    try {
+        user = User.find({'email':email})
+    }
+
+    catch(err) {
         res.status(400).json({
             message: "The user already exists"
         })
         return
     }
+
+    console.log(user)
 
     let hashedPass = ""
 
@@ -47,6 +55,21 @@ const createUser = async (req, res) => {
     }
 }
 
+const getAllUsers = async (req, res) => {
+    try {
+        const users = await User.find()
+        res.status(200).json(
+            users
+        )
+    }
+    catch(err) {
+        res.status(400).json({
+            message: "No users found"
+        })
+    } 
+}
+
 module.exports = {
-    createUser
+    createUser,
+    getAllUsers
 }
