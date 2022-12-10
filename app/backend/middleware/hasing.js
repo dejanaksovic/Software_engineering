@@ -9,7 +9,7 @@ const hashPass = async (pass) => {
 
     return hashedPass 
 
-}catch(err) {
+} catch(err) {
     return err
 }
 
@@ -23,13 +23,13 @@ const checkPass = async (pass, hashedPass) => {
     try {
 
         isRight = await bcrypt.compare(pass, hashedPass)
+        return isRight
 
-    }catch(err) {
+    } catch(err) {
 
-        return err
+        return false
 
     }
-    return isRight
 }
 
 module.exports = {

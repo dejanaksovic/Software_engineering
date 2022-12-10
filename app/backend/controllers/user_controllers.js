@@ -1,18 +1,21 @@
 const User = require('../models/user')
-const {hashPass, checkPass} = require('../middleware/hasing')
-const {generateToken, getAuthLevel} = require('../middleware/auth')
+const { hashPass, checkPass } = require('../middleware/hasing')
+const jtw = require('jsonwebtoken')
 
 const createUser = async (req, res) => {
 
-    let user = await User.findById(req.userid)
+    //@use, store user if already exists
+    let user = {}
+    console.log(req.user)
 
-    console.log(user)
+    if (req.user.authority !== "ADMIN") {
+        res.status(401).json({ message: "Validation failed, user is not an Admin" })
+        return
+    }
 
+    const { name, password, authority, email } = req.body
 
-
-    const {name, password, authority, email} = req.body
-
-    if(!name || !password || !email) {
+    if (!name || !password || !email) {
         res.status(400).json({
             message: "Not all necessary fields were given",
             name: name,
@@ -24,12 +27,12 @@ const createUser = async (req, res) => {
     }
 
     try {
-        user = User.find({'email':email})
+        user = await User.find({ 'email': email })
     }
 
-    catch(err) {
+    catch (err) {
         res.status(400).json({
-            message: "The user already exists"
+            message: "The user with the given email already exists"
         })
         return
     }
@@ -37,11 +40,11 @@ const createUser = async (req, res) => {
     let hashedPass = ""
 
     try {
-    hashedPass = await hashPass(password)
+        hashedPass = await hashPass(password)
     }
-    catch(err) {
+    catch (err) {
         res.status(500).json({
-            message:err,
+            message: err,
         })
         return
     }
@@ -50,46 +53,70 @@ const createUser = async (req, res) => {
         name,
         password: hashedPass,
         email,
-        authority,})
+        authority,
+    })
 
-    if(user) {
-        res.status(201).json({message: "User was created successfully"})
+    if (user) {
+        res.status(201).json({
+            message: "User was created successfully",
+            token: jtw.sign({ user }, process.env.SECRET_STRING)
+        })
+        return
     }
+
+    message.status(500).json({ message: "User was not created, internal error" })
 }
 
-const getAllUsers = async (req, res) => {
-    const user = await User.findById(req.userid)
+const getUsers = async (req, res) => {
 
-    console.log(user)
+    const {email} = req.params
 
-    try {
+    if (req.user.authority === "USER") {
+        res.status(401).json({
+            message:
+                "Request denied, user is not admin or boss"
+        })
+        return
+    }
+
+    if (!email) {
         const users = await User.find()
         res.status(200).json(
             users
         )
+        return
     }
-    catch(err) {
-        res.status(400).json({
-            message: "No users found"
-        })
-    } 
+
+    const user = await User.findOne({ email })
+
+    if (user) {
+        res.status(200).json(
+            user 
+        )
+        return
+    }
+
+    res.status(400).json({ message: "User does not exist" })
+
 }
 
 const loginUser = async (req, res) => {
-    const {email, password} = req.body
+    const { email, password } = req.body
 
-    const testUser = await User.find({email})
+    const testUser = await User.findOne({ email })
 
-    if(!testUser) {
+    console.log(email, password)
+
+    if (!testUser) {
         res.status(400).json({
             message: "The user doesn't exist"
         })
         return
     }
 
-    if(await checkPass(password, testUser.password)) {
+    if (await checkPass(password, testUser.password)) {
         res.status(200).json({
-            token: await generateToken(testUser.id)
+            token: jtw.sign({ testUser }, process.env.SECRET_STRING)
         })
 
         return
@@ -103,6 +130,6 @@ const loginUser = async (req, res) => {
 
 module.exports = {
     createUser,
-    getAllUsers,
+    getUsers,
     loginUser
 }
