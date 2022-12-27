@@ -1,5 +1,4 @@
 const mongoose = require('mongoose')
-const Business = mongoose.model("Business", BusinessSchema)
 
 const BusinessSchema = mongoose.Schema({
     name: {
@@ -7,10 +6,20 @@ const BusinessSchema = mongoose.Schema({
         required: true
     },
 
+    jobs: {
+        type: [
+            {
+                type: mongoose.Types.ObjectId,
+                ref: 'Job',
+            }
+        ],
+    },
+
     contact: {
         type: String,
         required: true,
     }},
+
     {
         timestamps: true
     })

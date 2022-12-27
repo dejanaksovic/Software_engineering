@@ -4,7 +4,6 @@ const JobSchema = mongoose.Schema({
     type: {
         type: String,
         required: true,
-        enum: ["PPO", "OPPA", "PPU"]
     },
 
     price: {
@@ -15,14 +14,8 @@ const JobSchema = mongoose.Schema({
     status: {
         type: String,
         required: true,
-        enum: ["IN_PROGRESS", "DONE", "SOON"]
+        enum: ["INPROGRESS", "DONE", "SOON", "STANDBY"]
     },
-
-    businessid: {
-        type: mongoose.Types.ObjectId,
-        required: true,
-    }
-
 },
     {
         timestamps: true,

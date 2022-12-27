@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const {createUser, getUsers, loginUser, updateUser} = require('../controllers/user_controllers')
+const {createUser, getUsers, loginUser, updateUser, deleteUser} = require('../controllers/user_controllers')
 const { tokenRequirement } = require('../middleware/auth')
 const adminAuthentication = require('../middleware/adminAuthentication')
 const bossAuthentication = require('../middleware/bossAuthentication')
@@ -24,5 +24,10 @@ router.post('/login', loginUser)
 // @PUT /users
 // Private [ADMIN]
 router.patch('/', tokenRequirement, adminAuthentication, updateUser)
+
+// Sends a request to delete a user by id
+// @DELETE /users
+// Private [ADMIN]
+router.delete('/:id', tokenRequirement, adminAuthentication, deleteUser)
 
 module.exports = router

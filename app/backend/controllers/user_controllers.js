@@ -1,6 +1,7 @@
 const User = require('../models/user')
 const { hashPass, checkPass } = require('../middleware/hasing')
 const jwt = require('jsonwebtoken')
+const { default: mongoose } = require('mongoose')
 
 const createUser = async (req, res) => {
 
@@ -17,13 +18,13 @@ const createUser = async (req, res) => {
         })
     }
 
-    try {
-        user = await User.find({ 'email': email })
-    }
+    user = User.findOne({
+        email,
+    })
 
-    catch (err) {
+    if(user) {
         return res.status(400).json({
-            message: "The user with the given email already exists"
+            message: "User with the given email already exists"
         })
     }
 
@@ -51,7 +52,7 @@ const createUser = async (req, res) => {
 
     res.status(201).json({
         message: "User was successfully created",
-        token: jwt.sign({user})
+        token: jwt.sign({user}, process.env.SECRET_STRING)
     })
 }
 
@@ -84,7 +85,7 @@ const loginUser = async (req, res) => {
     const user = await User.findOne({ email })
 
     if (!user) {
-        res.status(400).json({
+        res.status(404).json({
             message: "The user doesn't exist"
         })
         return
@@ -98,7 +99,7 @@ const loginUser = async (req, res) => {
         return
     }
 
-    res.status(400).json({
+    res.status(401).json({
         message: "The credentials don't match"
     })
 
@@ -112,11 +113,36 @@ const updateUser = async (req, res) => {
     })
 
     if(!user) {
-        return res.status(401).send({message: "user not found"})
+        return res.status(404).send({message: "user not found"})
     }
 
     return res.status(200).json({
         message: "User update succesfully"
+    })
+
+}
+
+const deleteUser = async (req, res) => {
+    const { id } = req.params
+    
+    if(!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(404).json({
+            message: "user not found"
+        })
+    }
+
+    const user = await User.findOneAndDelete({
+        _id: id,
+    })
+
+    if(!user) {
+        return res.status(404).json({
+            message: "user not found"
+        })
+    }
+
+    return res.status(200).json({
+        message: "User deleted successfully",
     })
 
 }
@@ -126,4 +152,5 @@ module.exports = {
     getUsers,
     loginUser,
     updateUser,
+    deleteUser,
 }
