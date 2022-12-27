@@ -1,25 +1,28 @@
-const jtw = require('jsonwebtoken')
-const user = require('../models/user')
+const jwt = require('jsonwebtoken')
 
-const getAuthLevel = (req, res, next) => {
+const tokenRequirement = (req, res, next) => {
     //Check if the autorization exists
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-            const token = req.headers.authorization.split(" ")[1]
-            let decoded = ""
-            try {
-                decoded = jtw.verify(token, process.env.SECRET_STRING)
-            }
-            catch(err) {
-                res.status(401).json({
-                    message: `Autorization error, invalid token`
-                })
-            }
-            req.user = decoded.testUser
-            next()
+    if (!req.headers.authorization || !req.headers.authorization.startsWith('Bearer')) {
+        return res.status(401).send({message: "Authorization failed, no token"})
     }
+
+    const token = req.headers.authorization.split(" ")[1]
+    let decodedToken;
+
+    try {
+        decodedToken = jwt.verify(token, process.env.SECRET_STRING)
+    }
+    catch(err) {
+        return res.status(401).send({message: `Authorization failed, invalid token ${err}`})
+    }
+
+    req.user = decodedToken.user
+
+    next()
 
 }
 
+
 module.exports = {
-    getAuthLevel
+    tokenRequirement
 }

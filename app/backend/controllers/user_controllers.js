@@ -1,29 +1,20 @@
 const User = require('../models/user')
 const { hashPass, checkPass } = require('../middleware/hasing')
-const jtw = require('jsonwebtoken')
+const jwt = require('jsonwebtoken')
 
 const createUser = async (req, res) => {
 
     //@use, store user if already exists
     let user = {}
-    console.log(req.user)
-
-    if (req.user.authority !== "ADMIN") {
-        res.status(401).json({ message: "Validation failed, user is not an Admin" })
-        return
-    }
-
     const { name, password, authority, email } = req.body
 
     if (!name || !password || !email) {
-        res.status(400).json({
+        return res.status(400).json({
             message: "Not all necessary fields were given",
             name: name,
             password,
             email
         })
-
-        return
     }
 
     try {
@@ -31,10 +22,9 @@ const createUser = async (req, res) => {
     }
 
     catch (err) {
-        res.status(400).json({
+        return res.status(400).json({
             message: "The user with the given email already exists"
         })
-        return
     }
 
     let hashedPass = ""
@@ -43,10 +33,9 @@ const createUser = async (req, res) => {
         hashedPass = await hashPass(password)
     }
     catch (err) {
-        res.status(500).json({
+        return res.status(500).json({
             message: err,
         })
-        return
     }
 
     user = await User.create({
@@ -56,67 +45,54 @@ const createUser = async (req, res) => {
         authority,
     })
 
-    if (user) {
-        res.status(201).json({
-            message: "User was created successfully",
-            token: jtw.sign({ user }, process.env.SECRET_STRING)
-        })
-        return
+    if (!user) {
+        return message.status(500).json({ message: "User was not created, internal error" })
     }
 
-    message.status(500).json({ message: "User was not created, internal error" })
+    res.status(201).json({
+        message: "User was successfully created",
+        token: jwt.sign({user})
+    })
 }
 
 const getUsers = async (req, res) => {
 
-    const {email} = req.params
-
-    if (req.user.authority === "USER") {
-        res.status(401).json({
-            message:
-                "Request denied, user is not admin or boss"
-        })
-        return
-    }
+    const { email } = req.params
 
     if (!email) {
         const users = await User.find()
-        res.status(200).json(
+        return res.status(200).json(
             users
         )
-        return
     }
 
     const user = await User.findOne({ email })
 
-    if (user) {
-        res.status(200).json(
-            user 
-        )
-        return
+    if (!user) {
+        return res.status(400).json({ message: "User does not exist" })
     }
 
-    res.status(400).json({ message: "User does not exist" })
+    res.status(200).json({
+        user
+    })
 
 }
 
 const loginUser = async (req, res) => {
     const { email, password } = req.body
 
-    const testUser = await User.findOne({ email })
+    const user = await User.findOne({ email })
 
-    console.log(email, password)
-
-    if (!testUser) {
+    if (!user) {
         res.status(400).json({
             message: "The user doesn't exist"
         })
         return
     }
 
-    if (await checkPass(password, testUser.password)) {
+    if (await checkPass(password, user.password)) {
         res.status(200).json({
-            token: jtw.sign({ testUser }, process.env.SECRET_STRING)
+            token: jwt.sign({ user }, process.env.SECRET_STRING)
         })
 
         return
@@ -128,8 +104,26 @@ const loginUser = async (req, res) => {
 
 }
 
+const updateUser = async (req, res) => {
+    const {name, email} = req.body
+    console.log("Inside update")
+    let user = await User.findOneAndUpdate({email}, {
+        name,
+    })
+
+    if(!user) {
+        return res.status(401).send({message: "user not found"})
+    }
+
+    return res.status(200).json({
+        message: "User update succesfully"
+    })
+
+}
+
 module.exports = {
     createUser,
     getUsers,
-    loginUser
+    loginUser,
+    updateUser,
 }
