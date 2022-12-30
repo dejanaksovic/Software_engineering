@@ -1,5 +1,6 @@
 const Business = require('../models/business')
 const mongoose = require('mongoose')
+const Job = require('../models/job')
 
 //Add new firm
 const addBusiness = async (req, res) => {
@@ -85,12 +86,18 @@ const updateBusiness = async(req, res) => {
         })
     }
 
+    await Job.deleteMany({
+        _id: {
+            $in: businesss.jobs
+        }
+    })
+
     res.status(200).json({
         message: "Business updated succesfully"
     })
 }
 
-//Delete business by id
+//Delete business by id with jobs connected to it
 const deleteBusiness = async(req, res) => {
     const { id } = req.params
     

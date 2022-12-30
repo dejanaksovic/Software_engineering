@@ -23,6 +23,6 @@ router.patch('/', tokenRequirement, bossAuthentication, updateBusiness)
 // @DELETE
 // Deletes a firm and all associate jobs with it
 // Private [ADMIN, BOSS]
-router.delete('/', tokenRequirement, bossAuthentication, deleteBusiness)
+router.delete('/id', tokenRequirement, bossAuthentication, deleteBusiness)
 
 module.exports = router

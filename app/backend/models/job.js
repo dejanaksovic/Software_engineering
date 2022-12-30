@@ -9,12 +9,14 @@ const JobSchema = mongoose.Schema({
     price: {
         type: Number,
         required: true,
+        default: 4000,
     },
 
     status: {
         type: String,
         required: true,
-        enum: ["INPROGRESS", "DONE", "SOON", "STANDBY"]
+        enum: ["IN_PROGRESS", "DONE", "SOON", "STAND_BY"],
+        default: "IN_PROGRESS"
     },
 },
     {
